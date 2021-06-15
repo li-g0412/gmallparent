@@ -17,6 +17,7 @@ public class ListApiController {
 
     /**
      * @return
+     *
      */
     @GetMapping("inner/createIndex")
     public Result createIndex() {

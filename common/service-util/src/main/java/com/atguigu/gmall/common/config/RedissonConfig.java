@@ -39,7 +39,6 @@ public class RedissonConfig {
     @Bean
     RedissonClient redissonSingle() {
         Config config = new Config();
-
         if(StringUtils.isEmpty(host)){
             throw new RuntimeException("host is  empty");
         }
@@ -49,7 +48,8 @@ public class RedissonConfig {
                 .setTimeout(this.timeout)
                 .setPingConnectionInterval(pingConnectionInterval)
                 .setConnectionPoolSize(this.connectionPoolSize)
-                .setConnectionMinimumIdleSize(this.connectionMinimumIdleSize);
+                .setConnectionMinimumIdleSize(this.connectionMinimumIdleSize)
+                ;
         if(!StringUtils.isEmpty(this.password)) {
             serverConfig.setPassword(this.password);
         }

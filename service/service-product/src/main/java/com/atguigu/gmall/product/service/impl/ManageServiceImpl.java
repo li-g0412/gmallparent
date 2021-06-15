@@ -81,6 +81,8 @@ public class ManageServiceImpl implements ManageService {
     @Autowired
     private RedissonClient redissonClient;
 
+    @Autowired
+    private BaseTrademarkMapper baseTrademarkMapper;
 
     @Override
     public List<BaseCategory1> getBaseCategory1() {
@@ -375,7 +377,6 @@ public class ManageServiceImpl implements ManageService {
                 //  直接调用redisson 的方法就可以了。
                 String lockKey = RedisConst.SKUKEY_PREFIX+skuId+RedisConst.SKULOCK_SUFFIX;
                 RLock lock = redissonClient.getLock(lockKey);
-
                 //  上锁
                 boolean result = lock.tryLock(RedisConst.SKULOCK_EXPIRE_PX1, RedisConst.SKULOCK_EXPIRE_PX2, TimeUnit.SECONDS);
                 //  判断是否获取到锁！
@@ -395,6 +396,7 @@ public class ManageServiceImpl implements ManageService {
                         //  放入缓存
                         redisTemplate.opsForValue().set(skuKey,skuInfo,RedisConst.SKUKEY_TIMEOUT,TimeUnit.SECONDS);
                         //  返回数据
+                        //  lockWatchdogTimeout
                         return skuInfo;
                     }finally {
                         lock.unlock();
@@ -660,5 +662,19 @@ public class ManageServiceImpl implements ManageService {
             list.add(category1);
         }
         return list;
+    }
+
+    @Override
+    public BaseTrademark getTrademarkByTmId(Long tmId) {
+        //  select * from base_trademark where id = tmId
+        BaseTrademark baseTrademark = baseTrademarkMapper.selectById(tmId);
+        return baseTrademark;
+    }
+
+    @Override
+    public List<BaseAttrInfo> getAttrList(Long skuId) {
+        //  根据skuId 获取平台属性数据集合
+        List<BaseAttrInfo> baseAttrInfoList =  baseAttrInfoMapper.selectAttrList(skuId);
+        return baseAttrInfoList;
     }
 }

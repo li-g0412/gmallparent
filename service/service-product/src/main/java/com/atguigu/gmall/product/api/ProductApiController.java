@@ -2,9 +2,7 @@ package com.atguigu.gmall.product.api;
 
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.gmall.common.result.Result;
-import com.atguigu.gmall.model.product.BaseCategoryView;
-import com.atguigu.gmall.model.product.SkuInfo;
-import com.atguigu.gmall.model.product.SpuSaleAttr;
+import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.service.ManageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -65,6 +63,17 @@ public class ProductApiController {
         //  调用服务层方法
         List<JSONObject> baseCategoryList = manageService.getBaseCategoryList();
         return Result.ok(baseCategoryList);
+    }
+    //  根据品牌Id 获取品牌数据
+    @GetMapping("inner/getTrademark/{tmId}")
+    public BaseTrademark getTrademark(@PathVariable Long tmId){
+        return manageService.getTrademarkByTmId(tmId);
+    }
+
+    //  根据skuId 获取平台属性数据
+    @GetMapping("inner/getAttrList/{skuId}")
+    public List<BaseAttrInfo> getAttrList(@PathVariable Long skuId){
+        return manageService.getAttrList(skuId);
     }
 
 }

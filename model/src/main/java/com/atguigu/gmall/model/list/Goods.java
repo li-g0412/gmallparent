@@ -14,7 +14,7 @@ import java.util.List;
 @Data
 @Document(indexName = "goods" , shards = 3,replicas = 2)
 public class Goods {
-    // 商品Id
+    // 商品Id skuId
     @Id
     private Long id;
 
@@ -59,7 +59,7 @@ public class Goods {
     @Field(type = FieldType.Keyword)
     private String category3Name;
 
-    //  商品的热度！
+    //  商品的热度！ 我们将商品被用户点查看的次数越多，则说明热度就越高！
     @Field(type = FieldType.Long)
     private Long hotScore = 0L;
 

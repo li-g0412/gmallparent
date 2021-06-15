@@ -13,7 +13,6 @@ import org.springframework.context.annotation.ComponentScan;
 @EnableFeignClients(basePackages= {"com.atguigu.gmall"})
 public class ServiceListApplication {
     public static void main(String[] args) {
-
         SpringApplication.run(ServiceListApplication.class,args);
     }
 }

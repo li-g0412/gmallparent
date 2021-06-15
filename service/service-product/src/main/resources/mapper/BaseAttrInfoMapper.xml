@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper SYSTEM "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!--非必要数据namespace：接口的全路径-->
+<mapper namespace="com.atguigu.gmall.product.mapper.BaseAttrInfoMapper">
+    <!--
+        id: 表示唯一性
+        type：表示当前映射结果集的返回类型
+    -->
+    <resultMap id="BaseAttrInfoMap" type="com.atguigu.gmall.model.product.BaseAttrInfo" autoMapping="true">
+        <!--    id 标签
+            id: 主键
+            column: 表示数据库表的字段
+            property：表示实体类对应的字段
+        -->
+        <id column="id" property="id"></id>
+        <!--
+            result 标签：存储普通的字段
+            多个普通字段可以使用autoMapping="true"
+        -->
+        <!--        <result  column="attr_name" property="attrName"></result>-->
+        <!--        <result  column="category_id" property="categoryId"></result>-->
+        <!--
+            mybatis 如何在xml 中配置1：n
+            property: 实体类对应的属性
+            ofType: 表示返回的数据类型
+        -->
+        <collection property="attrValueList" ofType="com.atguigu.gmall.model.product.BaseAttrValue" autoMapping="true">
+            <!--
+                多表关联查询的时候，注意字段重名，起个别名就可以了。
+            -->
+            <id column="attr_value_id" property="id"></id>
+        </collection>
+
+    </resultMap>
+    <!--
+        id: 方法名称
+        resultType: 返回的数据类型
+        resultMap:  返回自定义的映射结果集
+    -->
+    <!--mybatis
+        # and $ 区别?
+    -->
+    <select id="selectBaseAttrInfoList" resultMap="BaseAttrInfoMap">
+        select
+            bai.id,
+               bai.attr_name,
+               bai.category_id,
+               bai.category_level,
+               bav.id attr_value_id,
+               bav.value_name,
+               bav.attr_id
+        from base_attr_info bai inner join base_attr_value bav
+        on  bai.id = bav.attr_id
+        <where>
+            <if test="category1Id!=null and category1Id!=0">
+                or category_id = #{category1Id} and category_level = 1
+            </if>
+            <if test="category2Id!=null and category2Id!=0">
+                or category_id = #{category2Id} and category_level = 2
+            </if>
+            <if test="category3Id!=null and category3Id!=0">
+                or category_id = #{category3Id} and category_level = 3
+            </if>
+        </where>
+        order by bai.category_level, bai.id
+    </select>
+</mapper>

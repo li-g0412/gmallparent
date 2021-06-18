@@ -70,7 +70,7 @@ public class FileUplodController {
 
             //  上传文件的时候，需要注意的是：文件名称不能重复，文件的后缀名要与原来的后缀名保持一致！
             //  1232.png fileName.png
-            String extName = FilenameUtils.getExtension(file.getOriginalFilename());    //png
+            String extName = FilenameUtils.getExtension(file.getOriginalFilename());    // png
             //  1623051196858d86543a89170472384e5f3a5e781ba84.png
             String fileName = System.currentTimeMillis()+ UUID.randomUUID().toString().replace("-","")+"."+extName;
             // 使用putObject上传一个文件到存储桶中。
@@ -96,12 +96,6 @@ public class FileUplodController {
         }
         //  返回文件上传之后的url！
         return Result.ok(url);
-    }
-
-    public static void main(String[] args) {
-        System.out.println(FilenameUtils.getExtension("2.png"));
-        System.out.println(System.currentTimeMillis());
-        System.out.println(UUID.randomUUID().toString().replace("-",""));
     }
 
 }

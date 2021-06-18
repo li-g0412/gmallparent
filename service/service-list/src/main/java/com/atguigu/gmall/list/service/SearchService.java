@@ -3,8 +3,6 @@ package com.atguigu.gmall.list.service;
 import com.atguigu.gmall.model.list.SearchParam;
 import com.atguigu.gmall.model.list.SearchResponseVo;
 
-import java.io.IOException;
-
 /**
  * @author atguigu-mqx
  */
@@ -26,6 +24,6 @@ public interface SearchService {
      * @param searchParam
      * @return
      */
-    SearchResponseVo search(SearchParam searchParam) throws IOException;
+    SearchResponseVo search(SearchParam searchParam);
 
 }

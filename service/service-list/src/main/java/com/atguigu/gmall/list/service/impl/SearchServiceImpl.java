@@ -434,13 +434,13 @@ public class SearchServiceImpl implements SearchService {
         //  聚合：平台属性：nested
         searchSourceBuilder.aggregation(AggregationBuilders.nested("attrAgg","attrs")
                 .subAggregation(AggregationBuilders.terms("attrIdAgg").field("attrs.attrId")
-                        .subAggregation(AggregationBuilders.terms("attrNameAgg").field("attrs.attrName"))
+                .subAggregation(AggregationBuilders.terms("attrNameAgg").field("attrs.attrName"))
                         .subAggregation(AggregationBuilders.terms("attrValueAgg").field("attrs.attrValue"))));
 
         //  聚合：品牌
         searchSourceBuilder.aggregation(AggregationBuilders.terms("tmIdAgg").field("tmId")
-                .subAggregation(AggregationBuilders.terms("tmNameAgg").field("tmName"))
-                .subAggregation(AggregationBuilders.terms("tmLogoUrlAgg").field("tmLogoUrl")));
+                        .subAggregation(AggregationBuilders.terms("tmNameAgg").field("tmName"))
+                        .subAggregation(AggregationBuilders.terms("tmLogoUrlAgg").field("tmLogoUrl")));
 
         //  其他的设置！ 查询到那些字段显示
         searchSourceBuilder.fetchSource(new String[]{"id","defaultImg","title","price"},null);

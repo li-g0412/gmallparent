@@ -15,6 +15,7 @@
         <module>service-product</module>
         <module>service-item</module>
         <module>service-list</module>
+        <module>service-user</module>
     </modules>
 
     <dependencies>
@@ -83,6 +84,13 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-zipkin</artifactId>
+        </dependency>
+
+        <!--配置日志收集-->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>5.1</version>
         </dependency>
 
     </dependencies>

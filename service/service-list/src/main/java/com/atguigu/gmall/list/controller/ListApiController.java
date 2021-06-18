@@ -9,8 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-
 /**
  * @author atguigu-mqx
  */
@@ -54,10 +52,12 @@ public class ListApiController {
         return Result.ok();
     }
 
+    //  检索数据控制器！
     @PostMapping
-    public Result list(@RequestBody SearchParam searchParam) throws IOException {
-        SearchResponseVo response = searchService.search(searchParam);
-        return Result.ok(response);
+    public Result getList(@RequestBody SearchParam searchParam){
+        //  调用服务层方法
+        SearchResponseVo responseVo = searchService.search(searchParam);
+        return Result.ok(responseVo);
     }
 
 }

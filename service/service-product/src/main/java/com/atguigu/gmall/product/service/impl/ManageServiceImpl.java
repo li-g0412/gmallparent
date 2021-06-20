@@ -24,9 +24,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-/**
- * @author atguigu-mqx
- */
 @Service
 public class ManageServiceImpl implements ManageService {
     //  调用mapper层

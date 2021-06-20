@@ -17,9 +17,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 
-/**
- * @author atguigu-mqx
- */
 @Service
 public class ItemServiceImpl implements ItemService {
 

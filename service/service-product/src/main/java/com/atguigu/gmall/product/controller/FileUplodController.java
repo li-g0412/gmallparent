@@ -16,9 +16,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
-/**
- * @author atguigu-mqx
- */
 @RestController
 @RequestMapping("admin/product/")
 public class FileUplodController {

@@ -13,9 +13,6 @@ import org.thymeleaf.context.Context;
 import java.io.FileWriter;
 import java.io.IOException;
 
-/**
- * @author atguigu-mqx
- */
 @Controller
 public class IndexController {
 

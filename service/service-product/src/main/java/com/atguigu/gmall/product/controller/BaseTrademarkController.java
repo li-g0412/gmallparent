@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * @author atguigu-mqx
- */
 @RestController
 @RequestMapping("admin/product/baseTrademark")
 public class BaseTrademarkController {

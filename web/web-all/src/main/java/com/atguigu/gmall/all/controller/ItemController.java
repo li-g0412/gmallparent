@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.Map;
 
-/**
- * @author atguigu-mqx
- */
 @Controller
 public class ItemController {
 

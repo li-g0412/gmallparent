@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-/**
- * @author atguigu-mqx
- */
 @RestController
 @RequestMapping("api/item")
 public class ItemApiController {

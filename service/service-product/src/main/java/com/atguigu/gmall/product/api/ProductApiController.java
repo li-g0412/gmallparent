@@ -14,9 +14,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author atguigu-mqx
- */
 @RestController
 @RequestMapping("api/product")
 public class ProductApiController {

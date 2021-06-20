@@ -2,9 +2,6 @@ package com.atguigu.gmall.item.service;
 
 import java.util.Map;
 
-/**
- * @author atguigu-mqx
- */
 public interface ItemService {
 
     /**

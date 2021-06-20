@@ -9,9 +9,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-/**
- * @author atguigu-mqx
- */
 @FeignClient(value = "service-list",fallback = ListDegradeFeignClient.class)
 public interface ListFeignClient {
 

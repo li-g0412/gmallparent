@@ -7,9 +7,6 @@ import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
-/**
- * @author atguigu-mqx
- */
 @Mapper
 public interface BaseAttrInfoMapper extends BaseMapper<BaseAttrInfo> {
     /**

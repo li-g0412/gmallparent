@@ -3,9 +3,6 @@ package com.atguigu.gmall.product.controller;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
-/**
- * @author atguigu-mqx
- */
 public class CompletableFutureDemo {
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {

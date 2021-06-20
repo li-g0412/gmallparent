@@ -16,9 +16,6 @@ import org.springframework.util.StringUtils;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author atguigu-mqx
- */
 @Component
 @Aspect
 public class GmallCacheAspect {

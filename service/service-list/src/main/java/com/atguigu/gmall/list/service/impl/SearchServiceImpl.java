@@ -39,9 +39,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-/**
- * @author atguigu-mqx
- */
 @Service
 public class SearchServiceImpl implements SearchService {
 

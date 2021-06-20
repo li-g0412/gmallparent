@@ -12,9 +12,6 @@ import org.springframework.util.StringUtils;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author atguigu-mqx
- */
 @Service
 public class TestServiceImpl implements TestService {
 

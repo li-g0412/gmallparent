@@ -5,9 +5,6 @@ import com.atguigu.gmall.list.client.ListFeignClient;
 import com.atguigu.gmall.model.list.SearchParam;
 import org.springframework.stereotype.Component;
 
-/**
- * @author atguigu-mqx
- */
 @Component
 public class ListDegradeFeignClient implements ListFeignClient {
     @Override

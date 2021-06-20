@@ -7,9 +7,6 @@ import org.apache.ibatis.annotations.Mapper;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author atguigu-mqx
- */
 @Mapper
 public interface SkuSaleAttrValueMapper extends BaseMapper<SkuSaleAttrValue> {
     /**

@@ -9,9 +9,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author atguigu-mqx
- */
 @Component
 public class ProductDegradeFeignClient implements ProductFeignClient {
     @Override

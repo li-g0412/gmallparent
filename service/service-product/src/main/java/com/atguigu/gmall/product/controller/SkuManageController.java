@@ -8,9 +8,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * @author atguigu-mqx
- */
 @RestController
 @RequestMapping("admin/product")
 public class SkuManageController {

@@ -8,19 +8,15 @@ import com.atguigu.gmall.model.user.UserInfo;
 import com.atguigu.gmall.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author atguigu-mqx
- */
+
 @RestController
 @RequestMapping("/api/user/passport")
 public class PassportApiController {
@@ -64,7 +60,25 @@ public class PassportApiController {
             //  没有登录成功提示信息！
             return Result.fail().message("用户名或密码不正确!");
         }
+    }
 
+    //退出登录
+    @GetMapping("logout")
+    public Result logout(HttpServletRequest request){
+        String token = "";
+        Cookie[] cookies = request.getCookies();
+        if (cookies!=null &&cookies.length>0){
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("token")){
+                    token = cookie.getValue();
+                }
+            }
+        }
+        String userLoginKey = RedisConst.USER_LOGIN_KEY_PREFIX + token;
+        //删除缓存对应的key
+        redisTemplate.delete(userLoginKey);
+        //返回
+        return Result.ok();
 
     }
 }

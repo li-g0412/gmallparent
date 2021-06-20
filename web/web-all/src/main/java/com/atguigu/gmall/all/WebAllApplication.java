@@ -12,8 +12,7 @@ import org.springframework.context.annotation.ComponentScan;
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages= {"com.atguigu.gmall"})
 public class WebAllApplication {
-
     public static void main(String[] args) {
-        SpringApplication.run(WebAllApplication.class, args);
+        SpringApplication.run(WebAllApplication.class,args);
     }
 }

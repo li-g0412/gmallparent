@@ -12,6 +12,6 @@ import org.springframework.context.annotation.ComponentScan;
 @EnableFeignClients(basePackages = "com.atguigu.gmall")
 public class ServiceCartApplication {
     public static void main(String[] args) {
-        SpringApplication.run(ServiceCartApplication.class,args);
+        SpringApplication.run(ServiceCartApplication.class, args);
     }
 }

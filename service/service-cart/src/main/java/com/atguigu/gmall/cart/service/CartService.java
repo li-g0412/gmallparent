@@ -7,10 +7,8 @@ import java.util.List;
 public interface CartService {
     //  添加购物车的数据接口！
     void addToCart(Long skuId, String userId, Integer skuNum);
-
     /**
      * 通过用户Id 查询购物车列表
-     *
      * @param userId
      * @param userTempId
      * @return
@@ -28,10 +26,18 @@ public interface CartService {
 
     /**
      * 删除购物车数据
-     *
      * @param skuId
      * @param userId
      */
     void deleteCart(Long skuId, String userId);
+
+    /**
+     * 根据用户Id 查询购物车列表
+     *
+     * @param userId
+     * @return
+     */
+    List<CartInfo> getCartCheckedList(String userId);
+
 
 }

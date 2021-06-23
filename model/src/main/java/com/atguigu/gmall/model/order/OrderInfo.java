@@ -61,6 +61,7 @@ public class OrderInfo extends BaseEntity {
 
     @ApiModelProperty(value = "创建时间")
     @TableField("create_time")
+    @JsonFormat(locale="zh", timezone="GMT+8", pattern="yyyy-MM-dd HH:mm:ss")
     private Date createTime;
 
     @ApiModelProperty(value = "失效时间")

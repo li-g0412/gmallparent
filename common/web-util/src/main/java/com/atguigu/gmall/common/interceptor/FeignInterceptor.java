@@ -19,7 +19,6 @@ public class FeignInterceptor implements RequestInterceptor {
             requestTemplate.header("userTempId", request.getHeader("userTempId"));
             requestTemplate.header("userId", request.getHeader("userId"));
 
-            //
     }
 
 }

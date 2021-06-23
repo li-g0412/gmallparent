@@ -8,6 +8,7 @@ import com.atguigu.gmall.model.cart.CartInfo;
 import com.atguigu.gmall.model.product.SkuInfo;
 import com.atguigu.gmall.product.client.ProductFeignClient;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -48,7 +49,7 @@ public class CartServiceImpl implements CartService {
         String cartKey = getCartKey(userId);
 
         //  判断购物车的key 是否存在！
-        if (!redisTemplate.hasKey(cartKey)) {
+        if (!redisTemplate.hasKey(cartKey)){
             //  将数据库中的数据查询并放入缓存！
             this.loadCartCache(userId);
         }
@@ -62,9 +63,9 @@ public class CartServiceImpl implements CartService {
         //  hget key field
         CartInfo cartInfoExist = (CartInfo) redisTemplate.opsForHash().get(cartKey, skuId.toString());
         //  判断购物车中是否有当前商品
-        if (cartInfoExist != null) {
+        if (cartInfoExist!=null){
             //  说明购物车中已经有该商品了！
-            cartInfoExist.setSkuNum(cartInfoExist.getSkuNum() + skuNum);
+            cartInfoExist.setSkuNum(cartInfoExist.getSkuNum()+skuNum);
             //  查询一下实时价格 skuInfo.price
             cartInfoExist.setSkuPrice(productFeignClient.getSkuPrice(skuId));
             //  如果勾选状态发生变化的时候{没有选中}，第二次添加的时候要覆盖！
@@ -80,7 +81,7 @@ public class CartServiceImpl implements CartService {
             //  cartInfoMapper.update(cartInfoExist,cartInfoQueryWrapper);
             //  int i = 1/0;
             //  操作缓存！cartInfoExist
-        } else {
+        }else {
             //  当前商品在购物车列表中不存在！
             CartInfo cartInfo = new CartInfo();
             //  给cartInfo 赋值！
@@ -107,7 +108,7 @@ public class CartServiceImpl implements CartService {
         }
         //  使用缓存，必须考虑的问题！ 数据类型--hash ，key！
         //  hset key field value; hget key field  key = 唯一！ field = skuId value = cartInfo;
-        redisTemplate.opsForHash().put(cartKey, skuId.toString(), cartInfoExist);
+        redisTemplate.opsForHash().put(cartKey,skuId.toString(),cartInfoExist);
 
         //  redisTemplate.boundHashOps(cartKey).put(skuId.toString(),cartInfoExist);
         //  可以给购物车设置过期时间！
@@ -119,27 +120,27 @@ public class CartServiceImpl implements CartService {
         //  声明一个集合对象
         List<CartInfo> cartInfoList = new ArrayList<>();
         //  判断
-        if (StringUtils.isEmpty(userId)) {
+        if(StringUtils.isEmpty(userId)){
             //  查看临时用户Id 购物车列表
             cartInfoList = getCartList(userTempId);
         }
 
         //  查看登录的用户Id
-        if (!StringUtils.isEmpty(userId)) {
+        if (!StringUtils.isEmpty(userId)){
             //  合并的购物车业务逻辑！
             //  获取未登录购物车数据： userTempId 什么时候产生的，点击添加购物车时，没有临时用户Id，同时没有userId ，产生 放入cookie 中！
-            if (StringUtils.isEmpty(userTempId)) {
+            if (StringUtils.isEmpty(userTempId)){
                 cartInfoList = getCartList(userId);
                 return cartInfoList;
             }
             List<CartInfo> noLoginCartList = getCartList(userTempId);
             //  判断 未登录状态下有购物车
-            if (!CollectionUtils.isEmpty(noLoginCartList)) {
+            if (!CollectionUtils.isEmpty(noLoginCartList)){
                 //  合并购物车方法
-                cartInfoList = this.mergeToCartList(noLoginCartList, userId);
+                cartInfoList = this.mergeToCartList(noLoginCartList,userId);
                 //  删除临时购物车数据集合
                 this.deleteCartList(userTempId);
-            } else {
+            }else {
                 //  只有登录的购物车数据
                 cartInfoList = getCartList(userId);
             }
@@ -149,57 +150,77 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void checkCart(String userId, Integer isChecked, Long skuId) {
+
         //  mysql , redis
+        CartInfo cartInfoUpd = new CartInfo();
+        cartInfoUpd.setIsChecked(isChecked);
+        UpdateWrapper<CartInfo> cartInfoUpdateWrapper = new UpdateWrapper<>();
+        cartInfoUpdateWrapper.eq("sku_id",skuId);
+        cartInfoUpdateWrapper.eq("user_id",userId);
+        cartInfoMapper.update(cartInfoUpd,cartInfoUpdateWrapper);
+
         //  获取到key
         String cartKey = this.getCartKey(userId);
         // hget key field
         CartInfo cartInfo = (CartInfo) redisTemplate.opsForHash().get(cartKey, skuId.toString());
-        if (cartInfo != null) {
+        if (cartInfo!=null){
             //  用户的选中状态赋值给cartInfo
             cartInfo.setIsChecked(isChecked);
             //  在写入缓存！ hset key field value;
-            redisTemplate.opsForHash().put(cartKey, skuId.toString(), cartInfo);
+            redisTemplate.opsForHash().put(cartKey,skuId.toString(),cartInfo);
         }
 
-        //  update cart_info set is_checked = isChecked where sku_id = skuId and user_id = userId;
-        //        if (cartInfo!=null){
-        //            cartInfoMapper.updateById(cartInfo);
-        //        }else {
-        //            CartInfo cartInfoUpd = new CartInfo();
-        //            cartInfoUpd.setIsChecked(isChecked);
-        //            UpdateWrapper<CartInfo> cartInfoUpdateWrapper = new UpdateWrapper<>();
-        //            cartInfoUpdateWrapper.eq("sku_id",skuId);
-        //            cartInfoUpdateWrapper.eq("user_id",userId);
-        //            cartInfoMapper.update(cartInfoUpd,cartInfoUpdateWrapper);
-        //        }
-        cartInfoMapper.updateById(cartInfo);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteCart(Long skuId, String userId) {
         //  mysql redis
         //  delete from cart_info where user_id = ? and sku_id = ?;
-        cartInfoMapper.delete(new QueryWrapper<CartInfo>().eq("user_id", userId).eq("sku_id", skuId));
+        cartInfoMapper.delete(new QueryWrapper<CartInfo>().eq("user_id",userId).eq("sku_id",skuId));
         //  删除redis！
         //  获取到key
         String cartKey = this.getCartKey(userId);
         //  判断购物车中是否有该商品！
         Boolean flag = redisTemplate.boundHashOps(cartKey).hasKey(skuId.toString());
-        if (flag) {
+        if (flag){
             redisTemplate.boundHashOps(cartKey).delete(skuId.toString());
         }
 
     }
 
+    @Override
+    public List<CartInfo> getCartCheckedList(String userId) {
+        //  select * from cart_info where user_id = ?; 在缓存的购物车列中已经存在购物车集合！所以直接获取缓存！
+        //  获取缓存的key
+        String cartKey = this.getCartKey(userId);
+        //  获取到所有数据hvals
+        List<CartInfo> cartInfoList = redisTemplate.boundHashOps(cartKey).values();
+        //  声明一个存储选中的购物车集合
+        //  ArrayList<CartInfo> cartInfoCheckList = new ArrayList<>();
+        //  需要判断选中状态为 1
+        //        for (CartInfo cartInfo : cartInfoList) {
+        //            if (cartInfo.getIsChecked().intValue()==1){
+        //                cartInfoCheckList.add(cartInfo);
+        //            }
+        //        }
+        List<CartInfo> cartInfoCheckList = cartInfoList.stream().filter((cartInfo) -> {
+            return cartInfo.getIsChecked().intValue() == 1;
+        }).collect(Collectors.toList());
+        //  返回数据即可！
+        return cartInfoCheckList;
+    }
+
     /**
      * 合并购物车数据集合
-     *
-     * @param noLoginCartList 未登录购物车集合
-     * @param userId          通过userId 查询到登录的购物车集合
+     * @param noLoginCartList   未登录购物车集合
+     * @param userId    通过userId 查询到登录的购物车集合
      * @return
      */
-    private List<CartInfo> mergeToCartList(List<CartInfo> noLoginCartList, String userId) {
+    @Transactional(rollbackFor = Exception.class)
+    public List<CartInfo> mergeToCartList(List<CartInfo> noLoginCartList, String userId) {
         //  声明一个购物车集合对象
         List<CartInfo> cartInfoList = new ArrayList<>();
         /*
@@ -233,14 +254,14 @@ public class CartServiceImpl implements CartService {
         for (CartInfo noLoginCartInfo : noLoginCartList) {
             //  判断是否有包含关系！
             //  有相同的skuId   37,38
-            if (longCartInfoMap.containsKey(noLoginCartInfo.getSkuId())) {
+            if (longCartInfoMap.containsKey(noLoginCartInfo.getSkuId())){
                 //  对购物车中的商品数量进行·相加
                 CartInfo logInCartInfo = longCartInfoMap.get(noLoginCartInfo.getSkuId());
-                logInCartInfo.setSkuNum(logInCartInfo.getSkuNum() + noLoginCartInfo.getSkuNum());
+                logInCartInfo.setSkuNum(logInCartInfo.getSkuNum()+noLoginCartInfo.getSkuNum());
                 //  修改更新时间
                 logInCartInfo.setUpdateTime(new Timestamp(new Date().getTime()));
                 //  细节处理： 选中状态处理
-                if (noLoginCartInfo.getIsChecked().intValue() == 1) {
+                if (noLoginCartInfo.getIsChecked().intValue()==1){
                     //  46 赋值！
                     //                        if (logInCartInfo.getIsChecked().intValue()!=1){
                     //                            logInCartInfo.setIsChecked(1);
@@ -251,7 +272,7 @@ public class CartServiceImpl implements CartService {
                 //  执行更新语句！
                 cartInfoMapper.updateById(logInCartInfo);
 
-            } else {
+            }else {
                 //  没有相同的skuId  39
                 //  细节：应该知道当前userId 是谁了！
                 noLoginCartInfo.setUserId(userId);
@@ -269,26 +290,26 @@ public class CartServiceImpl implements CartService {
 
     /**
      * 删除未登录购物车数据
-     *
      * @param userTempId
      */
-    private void deleteCartList(String userTempId) {
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteCartList(String userTempId) {
         //  删除购物车：mysql redis！
+        //  delete from cart_info where user_id = ?
+        cartInfoMapper.delete(new QueryWrapper<CartInfo>().eq("user_id",userTempId));
         //  获取到缓存的key
         String cartKey = this.getCartKey(userTempId);
         //  判断是否存在！
         Boolean flag = redisTemplate.hasKey(cartKey);
-        if (flag) {
+        if (flag){
             redisTemplate.delete(cartKey);
         }
 
-        //  delete from cart_info where user_id = ?
-        cartInfoMapper.delete(new QueryWrapper<CartInfo>().eq("user_id", userTempId));
+
     }
 
     /**
      * 根据userId 查询购物车列表！
-     *
      * @param userId
      * @return
      */
@@ -300,7 +321,7 @@ public class CartServiceImpl implements CartService {
             第一件：查询缓存 ，缓存中没有数据，则查询数据，查询之后的数据再次放入缓存！
          */
         //  判断临时用户Id
-        if (StringUtils.isEmpty(userId)) {
+        if (StringUtils.isEmpty(userId)){
             return cartInfoList;
         }
 
@@ -311,13 +332,13 @@ public class CartServiceImpl implements CartService {
         //  List<CartInfo> cartInfoList = redisTemplate.opsForHash().values(cartKey);
         cartInfoList = redisTemplate.boundHashOps(cartKey).values();
         //  判断一下
-        if (!CollectionUtils.isEmpty(cartInfoList)) {
+        if(!CollectionUtils.isEmpty(cartInfoList)){
             //  展示购物车列表的时候应该有顺序！ 京东：按照更新时间！ 苏宁：创建时间！
-            cartInfoList.sort((o1, o2) -> {
+            cartInfoList.sort((o1,o2)->{
                 //  使用时间进行比较
-                return DateUtil.truncatedCompareTo(o2.getUpdateTime(), o1.getUpdateTime(), Calendar.SECOND);
+                return DateUtil.truncatedCompareTo(o2.getUpdateTime(),o1.getUpdateTime(), Calendar.SECOND);
             });
-        } else {
+        }else {
             //  缓存中的数据是空的，那么就应该走数据库！
             cartInfoList = this.loadCartCache(userId);
         }
@@ -327,7 +348,6 @@ public class CartServiceImpl implements CartService {
 
     /**
      * 缓存没有数据的时候应该查询数据库，并将数据放入缓存！
-     *
      * @param userId
      * @return
      */
@@ -337,11 +357,11 @@ public class CartServiceImpl implements CartService {
 
         //  如何查询数据？ select * from cart_info where user_id =1 order by update_time desc;
         QueryWrapper<CartInfo> cartInfoQueryWrapper = new QueryWrapper<>();
-        cartInfoQueryWrapper.eq("user_id", userId);
+        cartInfoQueryWrapper.eq("user_id",userId);
         cartInfoQueryWrapper.orderByDesc("update_time");
         cartInfoList = cartInfoMapper.selectList(cartInfoQueryWrapper);
         //  判断一下集合
-        if (CollectionUtils.isEmpty(cartInfoList)) {
+        if (CollectionUtils.isEmpty(cartInfoList)){
             return cartInfoList;
         }
         //  数据库中有购物车列表应该将数据放入缓存！
@@ -356,10 +376,10 @@ public class CartServiceImpl implements CartService {
             //  hmset key field value field value ;
             //  给当前购物车对象赋值实时价格！
             cartInfo.setSkuPrice(productFeignClient.getSkuPrice(cartInfo.getSkuId()));
-            map.put(cartInfo.getSkuId().toString(), cartInfo);
+            map.put(cartInfo.getSkuId().toString(),cartInfo);
         }
         //  一次放入数据即可！
-        redisTemplate.opsForHash().putAll(cartKey, map);
+        redisTemplate.opsForHash().putAll(cartKey,map);
 
         //  可以给过期时间！
         this.setCartKeyExpire(cartKey);
@@ -374,6 +394,6 @@ public class CartServiceImpl implements CartService {
 
     //  获取购物车的key
     private String getCartKey(String userId) {
-        return RedisConst.USER_KEY_PREFIX + userId + RedisConst.USER_CART_KEY_SUFFIX;
+        return RedisConst.USER_KEY_PREFIX+userId+RedisConst.USER_CART_KEY_SUFFIX;
     }
 }

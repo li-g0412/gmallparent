@@ -10,12 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
 
 @RestController
 @RequestMapping("/api/user/passport")
@@ -62,23 +60,29 @@ public class PassportApiController {
         }
     }
 
-    //退出登录
+    //  退出：
     @GetMapping("logout")
     public Result logout(HttpServletRequest request){
-        String token = "";
-        Cookie[] cookies = request.getCookies();
-        if (cookies!=null &&cookies.length>0){
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("token")){
-                    token = cookie.getValue();
-                }
-            }
-        }
-        String userLoginKey = RedisConst.USER_LOGIN_KEY_PREFIX + token;
-        //删除缓存对应的key
-        redisTemplate.delete(userLoginKey);
-        //返回
-        return Result.ok();
+        //  重点：放在token 如何获取！
+        //  在登录的时候，我们将token 写入了cookie！
+        //  String token = "";
+        //        Cookie[] cookies = request.getCookies();
+        //        if (cookies!=null && cookies.length>0){
+        //            for (Cookie cookie : cookies) {
+        //                if(cookie.getName().equals("token")){
+        //                    token = cookie.getValue();
+        //                }
+        //            }
+        //        }
+        String token = request.getHeader("token");
 
+        //  删除缓存的数据！ String数据类型 del key!
+        String userLoginKey = RedisConst.USER_LOGIN_KEY_PREFIX + token;
+        //  删除缓存对应的key
+        redisTemplate.delete(userLoginKey);
+        //  返回
+        return Result.ok();
     }
+
+
 }

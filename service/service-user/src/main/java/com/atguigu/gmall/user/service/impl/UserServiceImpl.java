@@ -1,6 +1,8 @@
 package com.atguigu.gmall.user.service.impl;
 
+import com.atguigu.gmall.model.user.UserAddress;
 import com.atguigu.gmall.model.user.UserInfo;
+import com.atguigu.gmall.user.mapper.UserAddressMapper;
 import com.atguigu.gmall.user.mapper.UserInfoMapper;
 import com.atguigu.gmall.user.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -8,11 +10,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import java.util.List;
+
 @Service
 public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserInfoMapper userInfoMapper;
+
+    @Autowired
+    private UserAddressMapper userAddressMapper;
 
 
     @Override
@@ -33,5 +40,11 @@ public class UserServiceImpl implements UserService {
             return info;
         }
         return null;
+    }
+
+    @Override
+    public List<UserAddress> findUserAddressListByUserId(String userId) {
+        //  select * from user_address where user_id = ?;
+        return  userAddressMapper.selectList(new QueryWrapper<UserAddress>().eq("user_id",userId));
     }
 }

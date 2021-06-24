@@ -86,6 +86,24 @@ public class OrderApiController {
         //  获取到userId
         String userId = AuthContextHolder.getUserId(request);
         //获取页面的流水号和缓存的流水号比较
+        String tradeNo = request.getParameter("tradeNo");
+        Boolean flag = orderService.checkTradeNo(tradeNo, userId);
+        if (!flag){
+            //返回非法提示信息
+            return Result.fail().message("不可回退提交订单");
+        }
+        //删除缓存流水号
+        orderService.deleteTradeNo(userId);
+        //验证库存远程调用
+        List<OrderDetail> orderDetailList = orderInfo.getOrderDetailList();
+        //循环遍历
+        for (OrderDetail orderDetail : orderDetailList) {
+            Boolean result = orderService.checkStock(orderDetail.getSkuId(),orderDetail.getSkuNum());
+            if (!result){
+                return Result.fail().message(orderDetail.getSkuName()+"库存不足");
+            }
+        }
+
 
         //  user_id{controller 能够获取到！}
         orderInfo.setUserId(Long.parseLong(userId));

@@ -10,7 +10,9 @@ public interface OrderService {
     //生成流水号
     String getTradeNo(String userId);
     //比较流水号
-    Boolean checkTradeNo(String tradeNo,Long userId);
+    Boolean checkTradeNo(String tradeNo,String userId);
 
-    void deleteTradeNo(Long userId);
+    void deleteTradeNo(String userId);
+
+    Boolean checkStock(Long skuId, Integer skuNum);
 }

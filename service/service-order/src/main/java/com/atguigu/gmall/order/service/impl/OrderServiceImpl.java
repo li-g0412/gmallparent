@@ -1,5 +1,6 @@
 package com.atguigu.gmall.order.service.impl;
 
+import com.atguigu.gmall.common.util.HttpClientUtil;
 import com.atguigu.gmall.model.enums.OrderStatus;
 import com.atguigu.gmall.model.enums.PaymentWay;
 import com.atguigu.gmall.model.enums.ProcessStatus;
@@ -9,6 +10,7 @@ import com.atguigu.gmall.order.mapper.OrderDetailMapper;
 import com.atguigu.gmall.order.mapper.OrderInfoMapper;
 import com.atguigu.gmall.order.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,8 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Value("${ware.url}")
+    private String WARE_URL;
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long saveOrder(OrderInfo orderInfo) {
@@ -98,7 +102,7 @@ public class OrderServiceImpl implements OrderService {
 
     //比较流水号
     @Override
-    public Boolean checkTradeNo(String tradeNo, Long userId) {
+    public Boolean checkTradeNo(String tradeNo, String userId) {
         //获取到缓存中的key
         String tradeNoKey = "tradeNo:"+userId;
         String tradeNoRedis = (String) redisTemplate.opsForValue().get(tradeNoKey);
@@ -107,10 +111,18 @@ public class OrderServiceImpl implements OrderService {
 
     //删除流水号
     @Override
-    public void deleteTradeNo(Long userId) {
+    public void deleteTradeNo(String userId) {
         // 定义key
         String tradeNoKey = "user:" + userId + ":tradeCode";
         // 删除数据
         redisTemplate.delete(tradeNoKey);
+    }
+
+    @Override
+    public Boolean checkStock(Long skuId, Integer skuNum) {
+        //
+        String result = HttpClientUtil.doGet(WARE_URL + "/hasStock?skuId=" + skuId + "&num=" + skuNum);
+
+        return "1".equals(result);
     }
 }

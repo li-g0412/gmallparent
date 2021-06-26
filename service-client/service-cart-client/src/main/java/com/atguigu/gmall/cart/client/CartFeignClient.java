@@ -25,4 +25,13 @@ public interface CartFeignClient {
     @GetMapping("/api/cart/getCartCheckedList/{userId}")
     List<CartInfo> getCartCheckedList(@PathVariable("userId") String userId);
 
+    /**
+     * 根据userId 查询购物车最新数据
+     * @param userId
+     * @return
+     */
+    @GetMapping("/api/cart/loadCartCache/{userId}")
+    Result loadCartCache(@PathVariable("userId") String userId);
+
+
 }

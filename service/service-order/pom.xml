@@ -27,6 +27,14 @@
             <artifactId>service-user-client</artifactId>
             <version>1.0</version>
         </dependency>
+
+        <!--rabbitmq消息队列-->
+        <dependency>
+            <groupId>com.atguigu.gmall</groupId>
+            <artifactId>rabbit-util</artifactId>
+            <version>1.0</version>
+        </dependency>
+
     </dependencies>
 
 </project>

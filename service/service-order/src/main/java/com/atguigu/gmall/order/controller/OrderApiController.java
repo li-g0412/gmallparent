@@ -8,15 +8,20 @@ import com.atguigu.gmall.model.order.OrderDetail;
 import com.atguigu.gmall.model.order.OrderInfo;
 import com.atguigu.gmall.model.user.UserAddress;
 import com.atguigu.gmall.order.service.OrderService;
+import com.atguigu.gmall.product.client.ProductFeignClient;
 import com.atguigu.gmall.user.client.UserFeignClient;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @RestController
 @RequestMapping("api/order")
@@ -32,6 +37,11 @@ public class OrderApiController {
     @Autowired
     private OrderService orderService;
 
+    @Autowired
+    private ProductFeignClient productFeignClient;
+
+    @Autowired
+    private ThreadPoolExecutor threadPoolExecutor;
 
     //  定义一个控制器！
     @GetMapping("auth/trade")
@@ -73,7 +83,7 @@ public class OrderApiController {
         //  计算总价格  计算完成之后赋值给当前对象 totalAmount
         orderInfo.sumTotalAmount();
         map.put("totalAmount",orderInfo.getTotalAmount());
-        //获取流水号突然地No
+        //  获取流水号 tradeNo
         String tradeNo = orderService.getTradeNo(userId);
         map.put("tradeNo",tradeNo);
         return Result.ok(map);
@@ -85,25 +95,89 @@ public class OrderApiController {
     public Result submitOrder(@RequestBody OrderInfo orderInfo,HttpServletRequest request){
         //  获取到userId
         String userId = AuthContextHolder.getUserId(request);
-        //获取页面的流水号和缓存的流水号比较
+
+        //  获取页面的流水号与缓存的流水号进行比较！
         String tradeNo = request.getParameter("tradeNo");
+
         Boolean flag = orderService.checkTradeNo(tradeNo, userId);
+        //  判断
+        //        if (flag){
+        //            //  正常提交
+        //        }else {
+        //            //  非法提交！
+        //        }
+
         if (!flag){
-            //返回非法提示信息
-            return Result.fail().message("不可回退提交订单");
+            //  返回非法提交信息
+            return Result.fail().message("不可回退提交订单!");
         }
-        //删除缓存流水号
+        //  删除缓存流水号
         orderService.deleteTradeNo(userId);
-        //验证库存远程调用
+
+        //  验证库存！ 远程调用 传入 skuId,skuNum !
         List<OrderDetail> orderDetailList = orderInfo.getOrderDetailList();
-        //循环遍历
+        //  声明一个集合来存储错误信息的！
+        ArrayList<String> strList = new ArrayList<>();
+        ArrayList<CompletableFuture> completableFutureArrayList = new ArrayList<>();
+        //  循环遍历
         for (OrderDetail orderDetail : orderDetailList) {
-            Boolean result = orderService.checkStock(orderDetail.getSkuId(),orderDetail.getSkuNum());
-            if (!result){
-                return Result.fail().message(orderDetail.getSkuName()+"库存不足");
-            }
+            //  验证库存！
+            CompletableFuture<Void> stockCompletableFuture = CompletableFuture.runAsync(() -> {
+                Boolean result = orderService.checkStock(orderDetail.getSkuId(), orderDetail.getSkuNum());
+                //  判断
+                if (!result) {
+                    //  Result.fail().message(orderDetail.getSkuName()+"库存不足!");
+                    strList.add(orderDetail.getSkuName() + "库存不足!");
+                }
+            },threadPoolExecutor);
+            //  将验证库存的对象添加到集合
+            completableFutureArrayList.add(stockCompletableFuture);
+
+            //  验证价格！
+            CompletableFuture<Void> priceCompletableFuture = CompletableFuture.runAsync(() -> {
+                //  验证商品的价格：
+                BigDecimal orderPrice = orderDetail.getOrderPrice();
+                //  订单价格与实时价格比较！
+                BigDecimal skuPrice = productFeignClient.getSkuPrice(orderDetail.getSkuId());
+                //  判断
+                if (orderPrice.compareTo(skuPrice)!=0){
+                    //  价格有变动！
+                    //  说明购物车中的价格有变动！更改购物车的价格！
+                    cartFeignClient.loadCartCache(userId);
+                    //  return Result.fail().message(orderDetail.getSkuName()+" 价格有变动!");
+                    strList.add(orderDetail.getSkuName()+" 价格有变动!");
+                }
+            },threadPoolExecutor);
+            //  将验证价格对象放入集合
+            completableFutureArrayList.add(priceCompletableFuture);
+
+            //            //  调用库存接口
+            //            Boolean result = orderService.checkStock(orderDetail.getSkuId(),orderDetail.getSkuNum());
+            //            //  判断
+            //            if (!result){
+            //                return Result.fail().message(orderDetail.getSkuName()+"库存不足!");
+            //            }
+            //            //  验证商品的价格：
+            //            BigDecimal orderPrice = orderDetail.getOrderPrice();
+            //            //  订单价格与实时价格比较！
+            //            BigDecimal skuPrice = productFeignClient.getSkuPrice(orderDetail.getSkuId());
+            //            //  判断
+            //            if (orderPrice.compareTo(skuPrice)!=0){
+            //                //  价格有变动！
+            //                //  说明购物车中的价格有变动！更改购物车的价格！
+            //                cartFeignClient.loadCartCache(userId);
+            //                return Result.fail().message(orderDetail.getSkuName()+" 价格有变动!");
+            //            }
         }
 
+        //  多任务组合！ 将集合转换为动态数组
+        CompletableFuture.allOf(completableFutureArrayList.toArray(new CompletableFuture[completableFutureArrayList.size()])).join();
+        //  判断输入信息！strList
+        if (strList.size()>0){
+            //  说明有异常！
+            //  输出集合中的数据！ 将集合中的数据使用,进行连接！
+            return Result.fail().message(StringUtils.join(strList,","));
+        }
 
         //  user_id{controller 能够获取到！}
         orderInfo.setUserId(Long.parseLong(userId));
@@ -113,6 +187,5 @@ public class OrderApiController {
         //  将orderId 返回即可！
         return Result.ok(orderId);
     }
-
 
 }

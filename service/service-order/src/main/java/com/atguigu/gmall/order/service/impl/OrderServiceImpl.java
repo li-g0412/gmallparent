@@ -11,6 +11,7 @@ import com.atguigu.gmall.model.order.OrderInfo;
 import com.atguigu.gmall.order.mapper.OrderDetailMapper;
 import com.atguigu.gmall.order.mapper.OrderInfoMapper;
 import com.atguigu.gmall.order.service.OrderService;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -161,5 +162,19 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper,OrderInfo> imp
         orderInfo.setOrderStatus(processStatus.getOrderStatus().name());
         orderInfo.setProcessStatus(processStatus.name());
         orderInfoMapper.updateById(orderInfo);
+    }
+
+    @Override
+    public OrderInfo getOrderInfo(Long orderId) {
+        OrderInfo orderInfo = orderInfoMapper.selectById(orderId);
+        if (orderInfo!= null){
+            QueryWrapper<OrderDetail> orderDetailQueryWrapper = new QueryWrapper<>();
+            orderDetailQueryWrapper.eq("order_id",orderId);
+            List<OrderDetail> orderDetailList = orderDetailMapper.selectList(orderDetailQueryWrapper);
+            orderInfo.setOrderDetailList(orderDetailList);
+            return orderInfo;
+        }
+
+        return null;
     }
 }

@@ -50,4 +50,11 @@ public interface OrderService extends IService<OrderInfo> {
      * @param processStatus
      */
     void updateOrderStatus(Long orderId, ProcessStatus processStatus);
+
+    /**
+     * 根据订单Id 获取订单数据
+     * @param orderId
+     * @return
+     */
+    OrderInfo getOrderInfo(Long orderId);
 }

@@ -66,6 +66,7 @@ public class OrderInfo extends BaseEntity {
 
     @ApiModelProperty(value = "失效时间")
     @TableField("expire_time")
+    @JsonFormat(locale="zh", timezone="GMT+8", pattern="yyyy-MM-dd HH:mm:ss")
     private Date expireTime;
 
     @ApiModelProperty(value = "进度状态")

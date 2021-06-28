@@ -4,8 +4,12 @@ import com.alibaba.fastjson.JSON;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.request.AlipayTradePagePayRequest;
+import com.alipay.api.request.AlipayTradeRefundRequest;
+import com.alipay.api.response.AlipayTradeRefundResponse;
+import com.atguigu.gmall.model.enums.PaymentStatus;
 import com.atguigu.gmall.model.enums.PaymentType;
 import com.atguigu.gmall.model.order.OrderInfo;
+import com.atguigu.gmall.model.payment.PaymentInfo;
 import com.atguigu.gmall.order.client.OrderFeignClient;
 import com.atguigu.gmall.payment.config.AlipayConfig;
 import com.atguigu.gmall.payment.service.AlipayService;
@@ -45,7 +49,7 @@ public class AlipayServiceImpl implements AlipayService {
         //  同步回调 http://api.gmall.com/api/payment/alipay/callback/return
         alipayRequest.setReturnUrl(AlipayConfig.return_payment_url);
         //  异步回调
-        alipayRequest.setNotifyUrl( "http://domain.com/CallBack/notify_url.jsp" ); //在公共参数中设置回跳和通知地址
+        alipayRequest.setNotifyUrl(AlipayConfig.notify_payment_url); //在公共参数中设置回跳和通知地址
         //  封装业务参数
         HashMap<String, Object> map = new HashMap<>();
         //  第三方业务编号！
@@ -62,5 +66,46 @@ public class AlipayServiceImpl implements AlipayService {
             e.printStackTrace();
         }
         return form;
+    }
+
+    @Override
+    public Boolean refund(Long orderId) {
+        //  通过orderId 获取到订单
+        OrderInfo orderInfo = orderFeignClient.getOrderInfo(orderId);
+        if (orderInfo ==null){
+            return false;
+        }
+        //  退款实现！
+        //  AlipayClient alipayClient = new DefaultAlipayClient("https://openapi.alipay.com/gateway.do","app_id","your private_key","json","GBK","alipay_public_key","RSA2");
+        AlipayTradeRefundRequest request = new AlipayTradeRefundRequest();
+        //  封装业务参数
+        HashMap<String, Object> map = new HashMap<>();
+        //  第三方业务编号！
+        map.put("out_trade_no",orderInfo.getOutTradeNo());
+        //  查询paymentInfo;
+        //  map.put("trade_no","");
+        map.put("refund_amount","0.01");
+        map.put("refund_reason","与想象的有点差别!");
+
+        request.setBizContent(JSON.toJSONString(map));
+
+        AlipayTradeRefundResponse response = null;
+        try {
+            response = alipayClient.execute(request);
+        } catch (AlipayApiException e) {
+            e.printStackTrace();
+        }
+        if(response.isSuccess()){
+            System.out.println("调用成功");
+            //  这个需要更新一下交易记录，改成关闭状态！
+            //  设置更新的内容
+            PaymentInfo paymentInfo = new PaymentInfo();
+            paymentInfo.setPaymentStatus(PaymentStatus.CLOSED.name());
+            paymentService.updatePaymentInfo(orderInfo.getOutTradeNo(),PaymentType.ALIPAY.name(),paymentInfo);
+            return true;
+        } else {
+            System.out.println("调用失败");
+            return false;
+        }
     }
 }

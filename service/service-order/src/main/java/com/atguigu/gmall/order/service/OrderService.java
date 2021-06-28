@@ -4,6 +4,9 @@ import com.atguigu.gmall.model.enums.ProcessStatus;
 import com.atguigu.gmall.model.order.OrderInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
+import java.util.Map;
+
 public interface OrderService extends IService<OrderInfo> {
 
     //  保存订单！
@@ -52,9 +55,31 @@ public interface OrderService extends IService<OrderInfo> {
     void updateOrderStatus(Long orderId, ProcessStatus processStatus);
 
     /**
-     * 根据订单Id 获取订单数据
+     * 根据订单Id 获取 订单数据！
      * @param orderId
      * @return
      */
     OrderInfo getOrderInfo(Long orderId);
+
+    /**
+     * 发送消息给库存系统
+     * @param orderId
+     */
+    void sendOrderStatus(Long orderId);
+
+    /**
+     * 将orderInfo 部分数据转换为Map
+     * @param orderInfo
+     * @return
+     */
+    Map initWareOrder(OrderInfo orderInfo);
+
+    /**
+     * 拆单方法
+     * @param orderId
+     * @param wareSkuMap
+     * @return
+     */
+    List<OrderInfo> orderSplit(String orderId, String wareSkuMap);
+
 }

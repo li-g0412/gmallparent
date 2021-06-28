@@ -1,5 +1,6 @@
 package com.atguigu.gmall.order.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.cart.client.CartFeignClient;
 import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.common.util.AuthContextHolder;
@@ -24,7 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 
 @RestController
-@RequestMapping("api/order")
+@RequestMapping("api/order") // api/order/orderSplit
 public class OrderApiController {
 
     //  获取到service-user 远程调用服务！
@@ -178,7 +179,6 @@ public class OrderApiController {
             //  输出集合中的数据！ 将集合中的数据使用,进行连接！
             return Result.fail().message(StringUtils.join(strList,","));
         }
-
         //  user_id{controller 能够获取到！}
         orderInfo.setUserId(Long.parseLong(userId));
         //  调用服务层方法
@@ -188,14 +188,33 @@ public class OrderApiController {
         return Result.ok(orderId);
     }
 
-    /**
-     * 内部调用获取订单
-     * @param orderId
-     * @return
-     */
+    //  根据订单Id 查询订单信息
     @GetMapping("inner/getOrderInfo/{orderId}")
-    public OrderInfo getOrderInfo(@PathVariable(value = "orderId") Long orderId){
+    public OrderInfo getOrderInfo(@PathVariable Long orderId){
         return orderService.getOrderInfo(orderId);
+    }
+
+    //  拆单的数据接口！
+    //  http://localhost:8204/api/order/orderSplit?orderId=xxx&wareSkuMap=xxx
+    @PostMapping("orderSplit")
+    public String orderSplit(HttpServletRequest request){
+        //  获取到订单Id
+        String orderId = request.getParameter("orderId");
+        //  仓库Id 与 商品skuId 的对照关系 [{"wareId":"1","skuIds":["2","10"]},{"wareId":"2","skuIds":["3"]}]
+        String wareSkuMap = request.getParameter("wareSkuMap");
+
+        //  声明一个集合来存储map
+        ArrayList<Map> maps = new ArrayList<>();
+        //  先根据上述两个参数得到子订单集合：
+        List<OrderInfo> orderInfoList = orderService.orderSplit(orderId,wareSkuMap);
+        //  将这个子订单集合循环遍历
+        for (OrderInfo orderInfo : orderInfoList) {
+            //  orderInfo 转换的map 集合
+            Map map = orderService.initWareOrder(orderInfo);
+            maps.add(map);
+        }
+        //  返回子订单Json字符串
+        return JSON.toJSONString(maps);
     }
 
 }

@@ -1,5 +1,6 @@
 package com.atguigu.gmall.order.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.common.constant.MqConst;
 import com.atguigu.gmall.common.service.RabbitService;
 import com.atguigu.gmall.common.util.HttpClientUtil;
@@ -141,15 +142,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper,OrderInfo> imp
 
     @Override
     public void execExpiredOrder(Long orderId) {
-        //  update order_info set order_status = ? ,process_status = ? where id = ?
-        //  方式一：
-        //        OrderInfo orderInfo = new OrderInfo();
-        //        orderInfo.setId(orderId);
-        //        orderInfo.setOrderStatus(OrderStatus.CLOSED.name());
-        //        orderInfo.setProcessStatus(ProcessStatus.CLOSED.name());
-        //        orderInfoMapper.updateById(orderInfo);
-
-        //  方式二：
         //  后续我们会有很多类似的更新操作！ 进度状态中能够获取到订单状态！
         this.updateOrderStatus(orderId,ProcessStatus.CLOSED);
     }
@@ -166,15 +158,78 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper,OrderInfo> imp
 
     @Override
     public OrderInfo getOrderInfo(Long orderId) {
+        //  select  * from order_info where id = orderId;
+
         OrderInfo orderInfo = orderInfoMapper.selectById(orderId);
-        if (orderInfo!= null){
+        if (orderInfo!=null){
+            //  select * from order_detail where order_id = orderId;
             QueryWrapper<OrderDetail> orderDetailQueryWrapper = new QueryWrapper<>();
             orderDetailQueryWrapper.eq("order_id",orderId);
             List<OrderDetail> orderDetailList = orderDetailMapper.selectList(orderDetailQueryWrapper);
             orderInfo.setOrderDetailList(orderDetailList);
-            return orderInfo;
         }
+        //  返回数据
+        return orderInfo;
+    }
 
+    @Override
+    public void sendOrderStatus(Long orderId) {
+        //  修改订单状态！
+        this.updateOrderStatus(orderId,ProcessStatus.NOTIFIED_WARE);
+        //  调用一个发送的方法! Json 数据类型
+        String wareJson = this.initWareOrder(orderId);
+        //  发送消息
+        rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_WARE_STOCK,MqConst.ROUTING_WARE_STOCK,wareJson);
+    }
+
+    //  这个方法返回Json 字符串
+    private String initWareOrder(Long orderId) {
+        // Json 字符串是由orderInfo ，orderDetail 部分字段组成！
+        OrderInfo orderInfo = this.getOrderInfo(orderId);
+        //  将 orderInfo 中部分属性变为Json 字符串！
+        Map map = this.initWareOrder(orderInfo);
+        //  JSON.toJSONString(orderInfo); 不能这么转！
+        return JSON.toJSONString(map);
+    }
+
+    /**
+     * 将orderInfo 转换为Map集合
+     * @param orderInfo
+     * @return
+     */
+    public Map initWareOrder(OrderInfo orderInfo){
+        Map map = new HashMap();
+        map.put("orderId",orderInfo.getId());
+        map.put("consignee", orderInfo.getConsignee());
+        map.put("consigneeTel", orderInfo.getConsigneeTel());
+        map.put("orderComment", orderInfo.getOrderComment());
+        map.put("orderBody", orderInfo.getTradeBody());
+        map.put("deliveryAddress", orderInfo.getDeliveryAddress());
+        map.put("paymentWay", "2");
+        map.put("wareId", orderInfo.getWareId());// 仓库Id ，减库存拆单时需要使用！
+        //  details:[{skuId:101,skuNum:1,skuName:’小米手64G’},{skuId:201,skuNum:1,skuName:’索尼耳机’}]
+        //  数据来源于orderDetailList
+        List<OrderDetail> orderDetailList = orderInfo.getOrderDetailList();
+        //  声明一个集合来存储订单明细需要的数据！
+        ArrayList<Map> maps = new ArrayList<>();
+        //  循环遍历订单明细！
+        for (OrderDetail orderDetail : orderDetailList) {
+            HashMap<String, Object> details = new HashMap<>();
+            details.put("skuId",orderDetail.getSkuId());
+            details.put("skuNum",orderDetail.getSkuNum());
+            details.put("skuName",orderDetail.getSkuName());
+            //  将details 放入一个集合
+            maps.add(details);
+        }
+        map.put("details",maps);
+        //  返回map 集合
+        return map;
+    }
+
+
+    @Override
+    public List<OrderInfo> orderSplit(String orderId, String wareSkuMap) {
         return null;
     }
+
 }

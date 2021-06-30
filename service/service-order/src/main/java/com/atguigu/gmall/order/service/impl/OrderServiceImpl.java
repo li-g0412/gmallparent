@@ -14,6 +14,7 @@ import com.atguigu.gmall.order.mapper.OrderInfoMapper;
 import com.atguigu.gmall.order.service.OrderService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -142,8 +143,21 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper,OrderInfo> imp
 
     @Override
     public void execExpiredOrder(Long orderId) {
+        //  update order_info set order_status = ? ,process_status = ? where id = ?
+        //  方式一：
+        //        OrderInfo orderInfo = new OrderInfo();
+        //        orderInfo.setId(orderId);
+        //        orderInfo.setOrderStatus(OrderStatus.CLOSED.name());
+        //        orderInfo.setProcessStatus(ProcessStatus.CLOSED.name());
+        //        orderInfoMapper.updateById(orderInfo);
+
+        //  方式二：
         //  后续我们会有很多类似的更新操作！ 进度状态中能够获取到订单状态！
         this.updateOrderStatus(orderId,ProcessStatus.CLOSED);
+
+        //  发送一个消息通知payment 关闭paymentInfo
+        this.rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_PAYMENT_CLOSE,MqConst.ROUTING_PAYMENT_CLOSE,orderId);
+
     }
 
     //  更进订单状态！
@@ -229,7 +243,77 @@ public class OrderServiceImpl extends ServiceImpl<OrderInfoMapper,OrderInfo> imp
 
     @Override
     public List<OrderInfo> orderSplit(String orderId, String wareSkuMap) {
-        return null;
+        /*
+        1.  先获取原始订单 {拆分哪个订单}
+        2.  根据wareSkuMap 这个参数判断如何拆分
+            [{"wareId":"1","skuIds":["2","10"]},{"wareId":"2","skuIds":["3"]}]
+            wareSkuMap 这个参数转换成我们能操作的对象！
+        3.  定义新的子订单，给子订单赋值！
+        4.  并将子订单插入到数据库！
+        5.  原始订单的状态应该为拆分！
+        6.  将子订单集合返回！
+         */
+        //  声明一个子订单集合
+        List<OrderInfo> subOrderInfoList = new ArrayList<>();
+        //  获取原始订单
+        OrderInfo orderInfoOrigin = this.getOrderInfo(Long.parseLong(orderId));
+        //  wareSkuMap 这个参数转换成我们能操作的对象！
+        List<Map> list = JSON.parseArray(wareSkuMap, Map.class);
+        for (Map map : list) {
+            //  仓库Id
+            String wareId = (String) map.get("wareId");
+            List<String> skuIdList = (List<String>) map.get("skuIds");
+            //  定义新的子订单，给子订单赋值！
+            OrderInfo subOrderInfo = new OrderInfo();
+            //  属性拷贝
+            BeanUtils.copyProperties(orderInfoOrigin,subOrderInfo);
+            //  设置子订单Id
+            subOrderInfo.setId(null);
+            //  找到父订单id
+            subOrderInfo.setParentOrderId(Long.parseLong(orderId));
+            //  给订单制定好仓库Id
+            subOrderInfo.setWareId(wareId);
+            //  重新计算子订单价格， 子订单的订单明细进行单价*数量
+            //  197 原始订单 42,43   [{"wareId":"1","skuIds":["42"]},{"wareId":"2","skuIds":["43"]}]
+            //  orderInfo1: 42  orderInfo2: 43
+            //  计算子订单的价格： 计算金额的时候，必须给 orderDetailList 赋值！
+            //  原始订单的明细：
+            List<OrderDetail> orderDetailList = orderInfoOrigin.getOrderDetailList();
+            //  声明一个对象来存储子订单的明细集合
+            ArrayList<OrderDetail> orderDetails = new ArrayList<>();
+            //   42,43
+            for (OrderDetail orderDetail : orderDetailList) {
+                for (String skuId : skuIdList) {
+                    if (orderDetail.getSkuId()==Long.parseLong(skuId)){
+                        //  将这个对应的orderDetail 放入子订单集合对象即可！
+                        orderDetails.add(orderDetail);
+                    }
+                }
+            }
+            //  赋值订单明细
+            subOrderInfo.setOrderDetailList(orderDetails);
+            subOrderInfo.sumTotalAmount();
+            //  将子订单放入数据库
+            this.saveOrder(subOrderInfo);
+            //  将每个子订单放入集合中
+            subOrderInfoList.add(subOrderInfo);
+        }
+
+        //  修改原始订单状态
+        this.updateOrderStatus(Long.parseLong(orderId),ProcessStatus.SPLIT);
+        //  返回子订单集合
+        return subOrderInfoList;
+    }
+
+    @Override
+    public void execExpiredOrder(Long orderId, String flag) {
+        //  后续我们会有很多类似的更新操作！ 进度状态中能够获取到订单状态！
+        this.updateOrderStatus(orderId,ProcessStatus.CLOSED);
+        //  判断flag
+        if ("2".equals(flag)){
+            //  发送一个消息通知payment 关闭paymentInfo
+            this.rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_PAYMENT_CLOSE,MqConst.ROUTING_PAYMENT_CLOSE,orderId);
+        }
     }
 
 }

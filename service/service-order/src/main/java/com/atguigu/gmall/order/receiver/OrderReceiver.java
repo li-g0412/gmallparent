@@ -4,7 +4,9 @@ import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.common.constant.MqConst;
 import com.atguigu.gmall.model.enums.ProcessStatus;
 import com.atguigu.gmall.model.order.OrderInfo;
+import com.atguigu.gmall.model.payment.PaymentInfo;
 import com.atguigu.gmall.order.service.OrderService;
+import com.atguigu.gmall.payment.client.PaymentFeignClient;
 import com.rabbitmq.client.Channel;
 import lombok.SneakyThrows;
 import org.springframework.amqp.core.Message;
@@ -23,24 +25,67 @@ public class OrderReceiver {
     @Autowired
     private OrderService orderService;
 
+    @Autowired
+    private PaymentFeignClient paymentFeignClient;
+
     //  监听消息
     @SneakyThrows
     @RabbitListener(queues = MqConst.QUEUE_ORDER_CANCEL)
     public void orderCancel(Long orderId, Message message, Channel channel){
         try {
-            //  业务逻辑
-            //  判断订单Id
+            //  判断订单id 是否存在！
             if (orderId!=null){
-                //  判断当前的订单状态！order_status ， process_status 未支付
-                //  select * from order_info where id = ?;
+                //  根据订单Id 查询订单对象
                 OrderInfo orderInfo = orderService.getById(orderId);
-                if (orderInfo!=null){
-                    if ("UNPAID".equals(orderInfo.getOrderStatus()) && "UNPAID".equals(orderInfo.getProcessStatus())){
-                        //  关闭订单！
-                        orderService.execExpiredOrder(orderId);
+                //  判断
+                if(orderInfo!=null && "UNPAID".equals(orderInfo.getOrderStatus()) && "UNPAID".equals(orderInfo.getProcessStatus())){
+                    //  关闭过期订单！ 还需要关闭对应的 paymentInfo ，还有alipay.
+                    //  orderService.execExpiredOrder(orderId);
+                    //  查询paymentInfo 是否存在！
+                    PaymentInfo paymentInfo = paymentFeignClient.getPaymentInfo(orderInfo.getOutTradeNo());
+                    //  判断 用户点击了扫码支付
+                    if(paymentInfo!=null && "UNPAID".equals(paymentInfo.getPaymentStatus())){
+
+                        //  查看是否有交易记录！
+                        Boolean flag = paymentFeignClient.checkPayment(orderId);
+                        //  判断
+                        if (flag){
+                            //  flag = true , 有交易记录
+                            //  调用关闭接口！ 扫码未支付这样才能关闭成功！
+                            Boolean result = paymentFeignClient.closePay(orderId);
+                            //  判断
+                            if (result){
+                                //  result = true; 关闭成功！未付款！需要关闭orderInfo， paymentInfo，Alipay
+                                orderService.execExpiredOrder(orderId,"2");
+                            }else {
+                                //  result = false; 表示付款！
+                                //  说明已经付款了！ 正常付款成功都会走异步通知！
+                            }
+                        }else {
+                            //  没有交易记录，不需要关闭支付！  需要关闭orderInfo， paymentInfo
+                            orderService.execExpiredOrder(orderId,"2");
+                        }
+
+                    }else {
+                        //  只关闭订单orderInfo！
+                        orderService.execExpiredOrder(orderId,"1");
                     }
                 }
             }
+
+            //            //  业务逻辑 关闭orderInfo ,paymentInfo ,aliPay
+            //            //  判断订单Id
+            //            if (orderId!=null){
+            //                //  判断当前的订单状态！order_status ， process_status 未支付
+            //                //  select * from order_info where id = ?;
+            //                OrderInfo orderInfo = orderService.getById(orderId);
+            //                if (orderInfo!=null){
+            //                    if ("UNPAID".equals(orderInfo.getOrderStatus()) && "UNPAID".equals(orderInfo.getProcessStatus())){
+            //                        //  关闭订单！
+            //                        orderService.execExpiredOrder(orderId);
+            //                    }
+            //                }
+            //            }
         } catch (Exception e) {
             //  写入日志...
             e.printStackTrace();

@@ -5,7 +5,6 @@ import com.atguigu.gmall.order.client.OrderFeignClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.servlet.http.HttpServletRequest;
@@ -24,6 +23,8 @@ public class OrderController {
         //  远程调用orderFeignClient
         Result<Map<String, Object>> result = orderFeignClient.trade();
 
+        //  ${tradeNo}
+        //  model.addAttribute("tradeNo",orderFeignClient.getTradeNo());
         //  返回页面视图名称  页面需要 userAddressList ， detailArrayList ，totalNum  ，totalAmount
         //        userAddressList = orderFeignClient.xxx();
         //        detailArrayList = orderFeignClient.xxx();

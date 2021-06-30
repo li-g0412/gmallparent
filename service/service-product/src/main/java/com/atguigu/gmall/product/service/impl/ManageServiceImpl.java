@@ -86,6 +86,7 @@ public class ManageServiceImpl implements ManageService {
     @Autowired
     private RabbitService rabbitService;
 
+
     @Override
     public List<BaseCategory1> getBaseCategory1() {
         //  select * from base_category1
@@ -332,8 +333,10 @@ public class ManageServiceImpl implements ManageService {
         skuInfo.setId(skuId);
         skuInfo.setIsSale(1);
         skuInfoMapper.updateById(skuInfo);
-        //再此发送一个消息，异步 有个监听者：调用upperGoods方法
-        this.rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_GOODS, MqConst.ROUTING_GOODS_UPPER, skuId);
+
+        //  在此发送一个消息！ 异步！   有个监听者：调用 upperGoods 这个方法！
+        //  发送消息的主体是谁？ 是根据消息监听者的业务逻辑有有关系！
+        this.rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_GOODS,MqConst.ROUTING_GOODS_UPPER,skuId);
 
     }
 
@@ -345,9 +348,9 @@ public class ManageServiceImpl implements ManageService {
         skuInfo.setId(skuId);
         skuInfo.setIsSale(0);
         skuInfoMapper.updateById(skuInfo);
-        //再此发送一个消息，异步 有个监听者：调用lowerGoods方法
-        //商品下架
-        rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_GOODS, MqConst.ROUTING_GOODS_LOWER, skuId);
+
+        //  在此发送一个消息！ 异步！   有个监听者：调用 lowerGoods 这个方法！
+        this.rabbitService.sendMessage(MqConst.EXCHANGE_DIRECT_GOODS,MqConst.ROUTING_GOODS_LOWER,skuId);
     }
 
     @SneakyThrows

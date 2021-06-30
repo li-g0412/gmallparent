@@ -11,7 +11,9 @@ import org.springframework.context.annotation.ComponentScan;
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages= {"com.atguigu.gmall"})
 public class ServicePaymentApplication {
+
    public static void main(String[] args) {
       SpringApplication.run(ServicePaymentApplication.class, args);
    }
+
 }

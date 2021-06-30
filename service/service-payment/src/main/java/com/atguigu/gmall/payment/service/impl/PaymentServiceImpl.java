@@ -95,7 +95,20 @@ public class PaymentServiceImpl implements PaymentService {
         paymentInfoQueryWrapper.eq("out_trade_no",outTradeNo);
         paymentInfoQueryWrapper.eq("payment_type",name);
         paymentInfoMapper.update(paymentInfo,paymentInfoQueryWrapper);
+    }
 
+    @Override
+    public void closePayment(Long orderId) {
+        //  关闭方法！
+        PaymentInfo paymentInfo = new PaymentInfo();
+        paymentInfo.setPaymentStatus(PaymentStatus.CLOSED.name());
+        QueryWrapper<PaymentInfo> paymentInfoQueryWrapper = new QueryWrapper<>();
+        paymentInfoQueryWrapper.eq("order_id",orderId);
+        //  做个一个判断：
+        PaymentInfo paymentInfoQuery = paymentInfoMapper.selectOne(paymentInfoQueryWrapper);
+        if (paymentInfoQuery==null) return;
 
+        //  第一个参数修改的内容，第二个参数条件
+        paymentInfoMapper.update(paymentInfo,paymentInfoQueryWrapper);
     }
 }

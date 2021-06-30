@@ -88,4 +88,12 @@ public class CartApiController {
     public List<CartInfo> getCartCheckedList(@PathVariable String userId){
         return cartService.getCartCheckedList(userId);
     }
+
+    //  定义一个控制器发布给订单使用！
+    @GetMapping("loadCartCache/{userId}")
+    public Result loadCartCache(@PathVariable("userId") String userId) {
+        cartService.loadCartCache(userId);
+        return Result.ok();
+    }
+
 }

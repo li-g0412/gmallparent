@@ -99,6 +99,39 @@ public class AlipayController {
         return Result.ok(flag);
     }
 
+    //  定义一个关闭支付交易的url！
+    @GetMapping("closePay/{orderId}")
+    @ResponseBody
+    public Boolean closePay(@PathVariable Long orderId){
+        //  调用服务层方法
+        Boolean flag = alipayService.closePay(orderId);
+        //  直接返回
+        return flag;
+    }
+
+    //  编写一个控制器
+    @RequestMapping("checkPayment/{orderId}")
+    @ResponseBody
+    public Boolean checkPayment(@PathVariable Long orderId){
+        //  调用服务层方法
+        Boolean flag = alipayService.checkPayment(orderId);
+        //  直接返回
+        return flag;
+    }
+
+    //  查询paymentInfo 的控制器！
+    @GetMapping("getPaymentInfo/{outTradeNo}")
+    @ResponseBody
+    public PaymentInfo getPaymentInfo(@PathVariable String outTradeNo){
+        PaymentInfo paymentInfo = paymentService.getPaymentInfo(outTradeNo, PaymentType.ALIPAY.name());
+        if (null!=paymentInfo){
+            return paymentInfo;
+        }
+        return null;
+    }
+
+
+
 }
 
 

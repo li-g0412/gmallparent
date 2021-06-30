@@ -109,7 +109,7 @@ public class OrderInfo extends BaseEntity {
 
     @ApiModelProperty(value = "可退款日期（签收后30天）")
     @TableField("refundable_time")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(locale="zh", timezone="GMT+8", pattern="yyyy-MM-dd HH:mm:ss")
     private Date refundableTime;
 
     @ApiModelProperty(value = "运费")
@@ -117,7 +117,7 @@ public class OrderInfo extends BaseEntity {
     private BigDecimal feightFee;
 
     @ApiModelProperty(value = "操作时间")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(locale="zh", timezone="GMT+8", pattern="yyyy-MM-dd HH:mm:ss")
     @TableField("operate_time")
     private Date operateTime;
 

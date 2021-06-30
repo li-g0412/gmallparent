@@ -351,7 +351,7 @@ public class CartServiceImpl implements CartService {
      * @param userId
      * @return
      */
-    private List<CartInfo> loadCartCache(String userId) {
+    public List<CartInfo> loadCartCache(String userId) {
         //  创建集合对象
         List<CartInfo> cartInfoList = new ArrayList<>();
 

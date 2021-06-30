@@ -25,6 +25,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+/**
+ * @author atguigu-mqx
+ */
 @Component
 public class AuthGlobalFilter implements GlobalFilter {
 

@@ -25,4 +25,5 @@ public interface OrderFeignClient {
     OrderInfo getOrderInfo(@PathVariable(value = "orderId") Long orderId);
 
 
+
 }

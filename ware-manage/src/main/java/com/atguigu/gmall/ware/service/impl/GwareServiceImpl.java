@@ -184,9 +184,11 @@ public class GwareServiceImpl implements GwareService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<WareOrderTask> checkOrderSplit(WareOrderTask wareOrderTask) {
+        //  库存工作单明细
         List<WareOrderTaskDetail> details = wareOrderTask.getDetails();
         List<String> skulist = new ArrayList<>();
         for (WareOrderTaskDetail detail : details) {
+            //  商品的skuId
             skulist.add(detail.getSkuId());
         }
         Map<String, List<String>> wareSkuMap = getWareSkuMap(skulist);
@@ -199,9 +201,11 @@ public class GwareServiceImpl implements GwareService {
             List<Map<String, Object>> wareSkuMapList = convertWareSkuMapList(wareSkuMap);
             String jsonString = JSON.toJSONString(wareSkuMapList);
             Map<String, String> map = new HashMap<>();
+            //  订单Id
             map.put("orderId", wareOrderTask.getOrderId());
+            // 仓库Id 与 商品SkuId 的对照关系！ [{"wareId":"1","skuIds":["2","10"]},{"wareId":"2","skuIds":["3"]}]
             map.put("wareSkuMap", jsonString);
-            // http://order.gmall.com/orderSplit?orderId=xxx&wareSkuMap=xxx
+            // http://localhost:8204/api/order/orderSplit?orderId=xxx&wareSkuMap=xxx
             String resultJson = HttpclientUtil.doPost(ORDER_URL, map);
             List<WareOrderTask> wareOrderTaskList = JSON.parseArray(resultJson, WareOrderTask.class);
             if (wareOrderTaskList.size() >= 2) {

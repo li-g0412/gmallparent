@@ -7,4 +7,20 @@ public interface AlipayService {
 
     //  退款接口
     Boolean refund(Long orderId);
+
+    /***
+     * 关闭交易
+     * @param orderId
+     * @return
+     */
+    Boolean closePay(Long orderId);
+
+    /**
+     * 根据订单查询是否支付成功！
+     * @param orderId
+     * @return
+     */
+    Boolean checkPayment(Long orderId);
+
+
 }

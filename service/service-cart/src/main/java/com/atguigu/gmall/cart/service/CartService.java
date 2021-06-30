@@ -39,5 +39,12 @@ public interface CartService {
      */
     List<CartInfo> getCartCheckedList(String userId);
 
+    /**
+     * 根据userId 查询最新购物车数据
+     * @param userId
+     * @return
+     */
+    public List<CartInfo> loadCartCache(String userId);
+
 
 }

@@ -14,11 +14,14 @@ public class PaymentController {
     @Autowired
     private OrderFeignClient orderFeignClient;
 
+    //  http://payment.gmall.com/pay.html?orderId=215
     @GetMapping("pay.html")
-    public String success(HttpServletRequest request){
+    public String pay(HttpServletRequest request){
         String orderId = request.getParameter("orderId");
+        //  调用方法获取orderInfo
         OrderInfo orderInfo = orderFeignClient.getOrderInfo(Long.parseLong(orderId));
         request.setAttribute("orderInfo",orderInfo);
+        //  返回页面！
         return "payment/pay";
     }
 

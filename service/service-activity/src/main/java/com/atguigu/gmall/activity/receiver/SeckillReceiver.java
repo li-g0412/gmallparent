@@ -1,10 +1,12 @@
 package com.atguigu.gmall.activity.receiver;
 
 import com.atguigu.gmall.activity.mapper.SeckillGoodsMapper;
+import com.atguigu.gmall.activity.service.SeckillGoodsService;
 import com.atguigu.gmall.common.constant.MqConst;
 import com.atguigu.gmall.common.constant.RedisConst;
 import com.atguigu.gmall.common.util.DateUtil;
 import com.atguigu.gmall.model.activity.SeckillGoods;
+import com.atguigu.gmall.model.activity.UserRecode;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.rabbitmq.client.Channel;
 import lombok.SneakyThrows;
@@ -20,6 +22,9 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * @author atguigu-mqx
+ */
 @Component
 public class SeckillReceiver {
 
@@ -28,6 +33,10 @@ public class SeckillReceiver {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    private SeckillGoodsService seckillGoodsService;
+
 
 
     //  监听定时任务发送过来的消息！
@@ -65,14 +74,39 @@ public class SeckillReceiver {
                 for (Integer i = 0; i < seckillGoods.getStockCount(); i++) {
                     //  放入list  key = seckill:stock:skuId;
                     String key = RedisConst.SECKILL_STOCK_PREFIX+seckillGoods.getSkuId();
-                    redisTemplate.opsForList().leftPush(key,seckillGoods.getSkuId());
+                    redisTemplate.opsForList().leftPush(key,seckillGoods.getSkuId().toString());
                     //  redisTemplate.boundListOps(key).leftPush(seckillGoods.getSkuId());
                 }
+
+                //  秒杀商品在初始化的时候：状态位初始化 1
+                //  publish seckillpush 46:1  | 后续业务如果说商品被秒杀完了！ publish seckillpush 46:0
+                redisTemplate.convertAndSend("seckillpush",seckillGoods.getSkuId()+":1");
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         //  手动确认消息
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(),false);
+    }
+
+    //  监听用户与商品的消息！
+    @SneakyThrows
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = MqConst.QUEUE_SECKILL_USER,durable = "true",autoDelete = "false"),
+            exchange = @Exchange(value = MqConst.EXCHANGE_DIRECT_SECKILL_USER),
+            key = {MqConst.ROUTING_SECKILL_USER}
+    ))
+    public void seckillUser(UserRecode userRecode,Message message,Channel channel){
+        try {
+            //  判断接收过来的数据
+            if (userRecode!=null){
+                //  预下单处理！
+                seckillGoodsService.seckillOrder(userRecode.getSkuId(),userRecode.getUserId());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //  手动确认
         channel.basicAck(message.getMessageProperties().getDeliveryTag(),false);
     }
 }
